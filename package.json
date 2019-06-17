@@ -1,0 +1,8 @@
+
+{
+  "name": "slack-facematch",
+  "version": "1.0.0",
+  "description": "Simple bot running Trivia on AWS helping users get to know their colleagues' names",
+  "author": "Francis Robichaud <francis@pleo.io>",
+  "license": "MIT"
+}
