@@ -8,7 +8,7 @@ provider:
 
 functions:
   current_time:
-    handler: facematch.register
+    handler: handlers.Lambda::Handlers.register
     events:
       - http:
           path: ping
