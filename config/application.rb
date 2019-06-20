@@ -60,4 +60,8 @@ Jets.application.configure do
   # local testing environment you may want to log these messages to 'test.log' file to keep your
   # testing suite output readable.
   # config.logger = Jets::Logger.new($strerr)
+
+  Slack.configure do |config|
+    config.token = ENV['SLACK_API_TOKEN']
+  end
 end
