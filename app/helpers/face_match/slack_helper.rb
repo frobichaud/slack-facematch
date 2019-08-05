@@ -21,6 +21,7 @@ module FaceMatch
                                             title: {},
                                             image_url: selected_profile[:picture],
                                             attachment_type: "default",
+                                            callback_id: 'name',
                                             actions: [{
                                               name: 'first',
                                               text: selected_profile[:name],
@@ -29,6 +30,24 @@ module FaceMatch
                                             }]
                                           }
                                         ])
+    end
+
+    def self.help(channel)
+      @client.chat_postMessage(channel: channel,
+                                        as_user: true,
+                                        text: 'Type "game" to receive the next profile picture challenge, and "stop" if you no longer want to receive messages.')
+    end
+
+    def self.reply_success(answer, channel)
+      @client.chat_postMessage(channel: channel,
+                                        as_user: true,
+                                        text: '✅Good job!✅, that was ' + answer)
+    end
+
+    def self.reply_failure(answer, channel)
+      @client.chat_postMessage(channel: channel,
+                                        as_user: true,
+                                        text: '‼Wrong pick‼, that was ' + answer)
     end
 
     private
