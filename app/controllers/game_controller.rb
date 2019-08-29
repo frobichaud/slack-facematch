@@ -1,12 +1,12 @@
 class GameController < ApplicationController
     def selection
       payload = JSON.parse params[:payload]
-      
+      puts payload['channel']['id']
+
       if payload['type'] == 'interactive_message'
         attachment = payload['original_message']['attachments'].first
         answer = attachment['actions'].find {|action| action['value'] == '1'}
         
-        #TODO verify success/failure
         if payload['actions'].first['value'] == '1'  
           result = {
             replace_original: false,
@@ -18,6 +18,10 @@ class GameController < ApplicationController
             text: '❌ Nope! That was ' + answer['text']
           }
         end
+      end
+      thr = Thread.new do
+        sleep(1)
+        FaceMatch::SlackHelper.play(payload['user'], payload['channel']['id'])
       end
       render json: result
     end
