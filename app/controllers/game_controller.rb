@@ -19,7 +19,7 @@ class GameController < ApplicationController
           }
         end
       end
-      thr = Thread.new do
+      Thread.new do # TODO call an AWS Lambda method to execute 
         sleep(1)
         FaceMatch::SlackHelper.play(payload['user'], payload['channel']['id'])
       end

@@ -1,7 +1,8 @@
 module FaceMatch
   class SlackHelper
-
+    
     @client = Slack::Web::Client.new
+    @cache = SlackCache.new(@client)
 
     def self.fetch_profiles(current_user)
       profiles = generate_profiles(current_user)
@@ -42,7 +43,7 @@ module FaceMatch
     def self.help(channel)
       @client.chat_postMessage(channel: channel,
                                         as_user: true,
-                                        text: 'Type "go" to receive a random profile picture challenge. "sync" if you need to force updating the organization user list.')
+                                        text: 'Type "go" to receive a random profile picture challenge')
     end
 
     def self.play(user, channel)
@@ -52,7 +53,7 @@ module FaceMatch
 
     private
     def self.generate_profiles(current_user)
-      members = @client.users_list[:members]
+      members = @cache.users
       first_rnd = filter_selection([current_user], members)
       second_rnd = filter_selection([current_user, first_rnd], members)
       selection = filter_selection([current_user, first_rnd.id, second_rnd.id], members)      
