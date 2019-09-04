@@ -1,6 +1,7 @@
 Jets.application.routes.draw do
   post 'subscribe', to: 'subscribe#create'
   post 'selection', to: 'game#selection'
+  post 'next_profile', to: 'game#next_profile'
   
   root "jets/public#show"
 

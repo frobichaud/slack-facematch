@@ -8,9 +8,10 @@ module FaceMatch
       profiles = generate_profiles(current_user)
       results = profiles.map.with_index do |profile, index|
         {
-          id: profile.id,
-          name: profile.profile.real_name,
-          picture: profile.profile.image_192,
+          id: profile['id'],
+          name: profile['profile']['real_name'],
+          picture: profile['profile']['image_192'],
+          title: profile['profile']['title'],
           answer: index == 0
         }
       end
@@ -31,12 +32,12 @@ module FaceMatch
                                             {
                                               name: profile[:id],
                                               text: profile[:name],
+                                              title: profile[:name],
                                               type: 'button',
                                               value: profile[:answer]
                                             }
                                           end
                                         }
-                                        
                                       ])
     end
 
@@ -56,19 +57,21 @@ module FaceMatch
       members = @cache.users
       first_rnd = filter_selection([current_user], members)
       second_rnd = filter_selection([current_user, first_rnd], members)
-      selection = filter_selection([current_user, first_rnd.id, second_rnd.id], members)      
+      selection = filter_selection([current_user, first_rnd['id'], second_rnd['id']], members)      
       [selection, first_rnd, second_rnd]
     end
 
     def self.filter_selection(user_filter, members)
       member = members[rand(0...members.count)]
-      # Skip bots, avoid the current_user, skip deleted users and make sure there's a picture
-      if (member.is_bot || 
+      # Skip invalid user profiles
+      if (member['is_bot'] || 
           user_filter.include?(member[:id]) || 
-          member[:id] == 'USLACKBOT' || 
-          member.profile[:image_192].nil? || 
-          member.is_app_user ||
-          member[:deleted])
+          member['id'] == 'USLACKBOT' || 
+          member['profile']['image_192'].nil? || 
+          member['is_app_user'] ||
+          member['deleted'] ||
+          member['is_restricted']
+        )
         member = filter_selection(user_filter, members)
       end
       member
