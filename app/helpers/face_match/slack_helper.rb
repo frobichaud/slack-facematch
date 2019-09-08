@@ -4,41 +4,69 @@ module FaceMatch
     @client = Slack::Web::Client.new
     @cache = SlackCache.new(@client)
 
-    def self.fetch_profiles(current_user)
-      profiles = generate_profiles(current_user)
+    def self.fetch_profiles(current_user_id)
+      profiles = generate_profiles(current_user_id)
       results = profiles.map.with_index do |profile, index|
         {
           id: profile['id'],
           name: profile['profile']['real_name'],
           picture: profile['profile']['image_192'],
           title: profile['profile']['title'],
-          answer: index == 0
+          answer: index == 0 ? 'true' : 'false'
         }
       end
-      results.shuffle
+      results
     end
 
     def self.send_quiz_message(profiles, channel)
       @client.chat_postMessage(channel: channel,
-                                        as_user: true,
-                                        text: 'WHO DIS?',
-                                        attachments: [{
-                                          type: 'image',
-                                          title: {},
-                                          image_url: profiles.find {|p| p[:answer]}[:picture],
-                                          attachment_type: "default",
-                                          callback_id: 'name',
-                                          actions: profiles.map do |profile| 
-                                            {
-                                              name: profile[:id],
-                                              text: profile[:name],
-                                              title: profile[:name],
-                                              type: 'button',
-                                              value: profile[:answer]
+                                        blocks: [
+                                          {
+                                            type: 'section',
+                                            text: {
+                                              text: '*WHO DIS?*',
+                                              type: 'mrkdwn'
                                             }
-                                          end
-                                        }
-                                      ])
+                                          },
+                                          {
+                                            type: 'image',
+                                            image_url: profiles.find {|p| p[:answer]}[:picture],
+                                            alt_text: 'Random'
+                                          },
+                                          {
+                                            type: 'actions',
+                                            block_id: 'profiles',
+                                            elements: profiles.shuffle.map do |profile| 
+                                              {
+                                                type: 'button',                                                  
+                                                text: {
+                                                  type: 'plain_text',
+                                                  text: profile[:name],
+                                                },
+                                                value: profile[:answer]
+                                              }
+                                            end
+                                          },
+                                          {
+                                            type: 'divider'
+                                          },
+                                          {
+                                            type: 'actions',
+                                            block_id: 'next',
+                                            elements: [
+                                              {
+                                                type: 'button',
+                                                text: {
+                                                  type: 'plain_text',
+                                                  text: 'Next'
+                                                },
+                                                style: "primary",
+                                                value: 'next'
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      )
     end
 
     def self.help(channel)
@@ -47,18 +75,22 @@ module FaceMatch
                                         text: 'Type "go" to receive a random profile picture challenge')
     end
 
-    def self.play(user, channel)
-      profiles = FaceMatch::SlackHelper.fetch_profiles(user)
+    def self.play(current_user_id, channel)
+      profiles = FaceMatch::SlackHelper.fetch_profiles(current_user_id)
       FaceMatch::SlackHelper.send_quiz_message(profiles, channel)
     end
 
     private
-    def self.generate_profiles(current_user)
+    def self.generate_profiles(current_user_id)
       members = @cache.users
-      first_rnd = filter_selection([current_user], members)
-      second_rnd = filter_selection([current_user, first_rnd], members)
-      selection = filter_selection([current_user, first_rnd['id'], second_rnd['id']], members)      
-      [selection, first_rnd, second_rnd]
+      filtered_user_ids = [current_user_id]
+      results = []
+      4.times.each do
+        match = filter_selection(filtered_user_ids, members)
+        results << match
+        filtered_user_ids << match['id']
+      end
+      results
     end
 
     def self.filter_selection(user_filter, members)
